@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MatchVoc — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1A365D;--navy-light:#2A4A7F;--navy-dark:#0F2040;
+    --white:#FFFFFF;--pearl:#F7FAFC;--gray:#E2E8F0;--gray-mid:#94A3B8;
+    --accent:#3B82F6;--green:#10B981;--red:#EF4444;--amber:#F59E0B;
+    --sidebar-w:240px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--pearl);color:var(--navy-dark);display:flex;min-height:100vh;}
+
+  .sidebar{width:var(--sidebar-w);background:var(--navy);min-height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100;}
+  .sidebar-brand{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;}
+  .brand-icon{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+  .sidebar-brand span{font-family:'DM Serif Display',serif;font-size:20px;color:white;}
+  .sidebar-nav{flex:1;padding:16px 10px;display:flex;flex-direction:column;gap:2px;}
+  .nav-label{font-size:10px;font-weight:500;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:1px;padding:14px 10px 6px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,0.6);cursor:pointer;transition:all 0.15s;font-size:14px;border:none;background:none;width:100%;text-align:left;}
+  .nav-item:hover{background:rgba(255,255,255,0.07);color:white;}
+  .nav-item.active{background:var(--accent);color:white;}
+  .nav-item .ni{font-size:17px;width:20px;text-align:center;}
+  .sidebar-footer{padding:14px 10px;border-top:1px solid rgba(255,255,255,0.08);}
+  .user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.05);cursor:pointer;transition:background 0.15s;}
+  .user-card:hover{background:rgba(255,255,255,0.1);}
+  .avatar{width:32px;height:32px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:white;flex-shrink:0;overflow:hidden;}
+  .avatar img{width:100%;height:100%;object-fit:cover;}
+  .user-info{flex:1;min-width:0;}
+  .user-name{font-size:13px;color:white;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .user-role{font-size:11px;color:rgba(255,255,255,0.4);}
+  .btn-logout{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.35);font-size:16px;transition:color 0.15s;flex-shrink:0;padding:4px;}
+  .btn-logout:hover{color:var(--red);}
+
+  .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;}
+  .topbar{background:white;border-bottom:1px solid var(--gray);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar h1{font-family:'DM Serif Display',serif;font-size:22px;color:var(--navy-dark);}
+  .date-badge{font-size:13px;color:var(--gray-mid);background:var(--pearl);padding:6px 12px;border-radius:20px;border:1px solid var(--gray);}
+  .content{padding:28px;flex:1;}
+
+  .section{display:none;animation:fadeUp 0.3s ease both;}
+  .section.active{display:block;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+  .stat-card{background:white;border-radius:12px;padding:20px;border:1px solid var(--gray);transition:box-shadow 0.2s;}
+  .stat-card:hover{box-shadow:0 4px 20px rgba(0,0,0,0.06);}
+  .stat-label{font-size:12px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;}
+  .stat-value{font-family:'DM Serif Display',serif;font-size:34px;color:var(--navy-dark);line-height:1;margin-bottom:8px;}
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;}
+  .chip.green{background:#ECFDF5;color:var(--green);}
+  .chip.blue{background:#EFF6FF;color:var(--accent);}
+  .chip.amber{background:#FFFBEB;color:var(--amber);}
+
+  .card{background:white;border-radius:12px;border:1px solid var(--gray);overflow:hidden;margin-bottom:24px;}
+  .card-header{padding:16px 20px;border-bottom:1px solid var(--gray);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .card-title{font-size:15px;font-weight:500;color:var(--navy-dark);}
+  .search{padding:8px 12px;border:1.5px solid var(--gray);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color 0.15s;width:220px;}
+  .search:focus{border-color:var(--accent);}
+
+  .btn{padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;border:none;}
+  .btn-primary{background:var(--navy);color:white;}
+  .btn-primary:hover{background:var(--navy-light);}
+  .btn-outline{background:none;border:1.5px solid var(--gray);color:var(--navy);}
+  .btn-outline:hover{background:var(--pearl);}
+  .btn-danger{background:none;border:1.5px solid #FECACA;color:var(--red);}
+  .btn-danger:hover{background:#FEF2F2;}
+  .btn-edit{background:none;border:1.5px solid #BFDBFE;color:var(--accent);}
+  .btn-edit:hover{background:#EFF6FF;}
+
+  table{width:100%;border-collapse:collapse;}
+  thead th{padding:10px 16px;text-align:left;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-mid);background:var(--pearl);border-bottom:1px solid var(--gray);}
+  tbody tr{border-bottom:1px solid var(--gray);transition:background 0.1s;}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:#FAFBFC;}
+  tbody td{padding:12px 16px;font-size:13px;color:var(--navy-dark);}
+  .badge{display:inline-flex;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;}
+  .badge.admin{background:#EFF6FF;color:var(--accent);}
+  .badge.student{background:#ECFDF5;color:var(--green);}
+  .badge.active{background:#ECFDF5;color:var(--green);}
+  .badge.inactive{background:#FEF2F2;color:var(--red);}
+  .empty{text-align:center;padding:50px 20px;color:var(--gray-mid);}
+  .empty .ei{font-size:40px;margin-bottom:10px;}
+  .empty p{font-size:14px;}
+
+  .bar-row{margin-bottom:18px;}
+  .bar-info{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;}
+  .bar-track{height:8px;background:var(--gray);border-radius:99px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--navy);border-radius:99px;transition:width 1s ease;}
+
+  /* Sector row clickeable */
+  .sector-row{cursor:pointer;}
+  .sector-row td:first-child,.sector-row td:nth-child(2){color:var(--navy);}
+  .sector-chevron{color:var(--gray-mid);font-size:16px;transition:transform 0.2s;}
+
+  /* Panel detalle carreras */
+  .carreras-panel{display:none;background:var(--pearl);border-top:1px solid var(--gray);}
+  .carreras-panel.open{display:table-row-group;}
+  .carreras-panel td{padding:0 !important;}
+  .carreras-inner{padding:16px 20px 20px 48px;}
+  .carreras-inner .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .carreras-inner .panel-title{font-size:13px;font-weight:500;color:var(--navy);display:flex;align-items:center;gap:6px;}
+  .carreras-table{width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;border:1px solid var(--gray);}
+  .carreras-table th{padding:8px 14px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-mid);background:var(--pearl);border-bottom:1px solid var(--gray);text-align:left;}
+  .carreras-table td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--gray);}
+  .carreras-table tr:last-child td{border-bottom:none;}
+
+  /* Modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:white;border-radius:16px;padding:28px;width:100%;max-width:460px;animation:fadeUp 0.2s ease both;}
+  .modal h3{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:20px;}
+  .form-field{margin-bottom:16px;}
+  .form-field label{display:block;font-size:12px;font-weight:500;color:var(--navy);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;}
+  .form-field input,.form-field select,.form-field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--gray);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;background:var(--pearl);}
+  .form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--accent);background:white;}
+  .form-field textarea{resize:vertical;min-height:80px;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+  .section-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .section-title{font-family:'DM Serif Display',serif;font-size:20px;}
+
+  .alert-inline{padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none;}
+  .alert-inline.error{background:#FEF2F2;border:1px solid #FECACA;color:var(--red);display:block;}
+
+  /* Perfil */
+  .perfil-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .perfil-avatar-card{background:white;border-radius:12px;border:1px solid var(--gray);padding:32px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .perfil-avatar{width:100px;height:100px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:40px;color:white;overflow:hidden;border:4px solid var(--pearl);box-shadow:0 4px 20px rgba(0,0,0,0.1);}
+  .perfil-avatar img{width:100%;height:100%;object-fit:cover;}
+  .perfil-name{font-family:'DM Serif Display',serif;font-size:22px;color:var(--navy-dark);}
+  .perfil-email{font-size:14px;color:var(--gray-mid);}
+  .perfil-role{background:#EFF6FF;color:var(--accent);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;}
+  .perfil-form-card{background:white;border-radius:12px;border:1px solid var(--gray);overflow:hidden;}
+  .perfil-tabs{display:flex;border-bottom:1px solid var(--gray);}
+  .perfil-tab{flex:1;padding:14px;text-align:center;font-size:13px;font-weight:500;color:var(--gray-mid);cursor:pointer;transition:all 0.15s;border:none;background:none;border-bottom:2px solid transparent;}
+  .perfil-tab.active{color:var(--navy);border-bottom-color:var(--navy);}
+  .perfil-tab-content{display:none;padding:24px;}
+  .perfil-tab-content.active{display:block;}
+  .perfil-field{margin-bottom:16px;}
+  .perfil-field label{display:block;font-size:12px;font-weight:500;color:var(--navy);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;}
+  .perfil-field input{width:100%;padding:11px 14px;border:1.5px solid var(--gray);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:all 0.15s;background:var(--pearl);color:var(--navy-dark);}
+  .perfil-field input:focus{border-color:var(--accent);background:white;box-shadow:0 0 0 3px rgba(59,130,246,0.08);}
+  .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none;}
+  .alert.success{background:#ECFDF5;border:1px solid #A7F3D0;color:var(--green);display:block;}
+  .alert.error{background:#FEF2F2;border:1px solid #FECACA;color:var(--red);display:block;}
+  .foto-url-hint{font-size:11px;color:var(--gray-mid);margin-top:4px;}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="white" stroke="white"/>
+      </svg>
+    </div>
+    <span>MatchVoc</span>
+  </div>
+  <nav class="sidebar-nav">
+    <span class="nav-label">Principal</span>
+    <button class="nav-item active" onclick="show('dashboard',this)"><span class="ni">📊</span> Dashboard</button>
+    <span class="nav-label">Gestión</span>
+    <button class="nav-item" onclick="show('alumnos',this)"><span class="ni">👨‍🎓</span> Alumnos</button>
+    <button class="nav-item" onclick="show('sectores',this)"><span class="ni">📁</span> Sectores</button>
+    <button class="nav-item" onclick="show('tarjetas',this)"><span class="ni">🃏</span> Tarjetas</button>
+    <button class="nav-item" onclick="show('universidades',this)"><span class="ni">🏛️</span> Universidades</button>
+    <span class="nav-label">Análisis</span>
+    <button class="nav-item" onclick="show('resultados',this)"><span class="ni">📈</span> Resultados</button>
+    <button class="nav-item" onclick="show('estadisticas',this)"><span class="ni">🔍</span> Estadísticas</button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card" onclick="show('perfil',null)">
+      <div class="avatar" id="sidebarAvatar"><span id="sidebarLetter">A</span></div>
+      <div class="user-info">
+        <div class="user-name" id="sidebarName">Admin</div>
+        <div class="user-role">Administrador</div>
+      </div>
+      <button class="btn-logout" onclick="event.stopPropagation();logout()" title="Cerrar sesión">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h1 id="pageTitle">Dashboard</h1>
+    <span class="date-badge" id="dateLabel"></span>
+  </div>
+  <div class="content">
+
+    <!-- Dashboard -->
+    <div class="section active" id="s-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Alumnos</div><div class="stat-value" id="cnt-alumnos">—</div><span class="chip green">● Registrados</span></div>
+        <div class="stat-card"><div class="stat-label">Sectores</div><div class="stat-value" id="cnt-sectores">—</div><span class="chip blue">● Categorías</span></div>
+        <div class="stat-card"><div class="stat-label">Tarjetas activas</div><div class="stat-value" id="cnt-tarjetas">—</div><span class="chip blue">● En el test</span></div>
+        <div class="stat-card"><div class="stat-label">Tests completados</div><div class="stat-value" id="cnt-resultados">—</div><span class="chip amber">● Resultados</span></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Alumnos recientes</span><button class="btn btn-outline" onclick="show('alumnos',document.querySelectorAll('.nav-item')[1])">Ver todos</button></div>
+        <table><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th></tr></thead><tbody id="recent-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Alumnos -->
+    <div class="section" id="s-alumnos">
+      <div class="section-top"><h2 class="section-title">Alumnos</h2></div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Todos los usuarios</span><input class="search" type="text" placeholder="🔍 Buscar..." oninput="filterAlumnos(this.value)"></div>
+        <table><thead><tr><th>ID</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Registro</th></tr></thead><tbody id="alumnos-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Sectores -->
+    <div class="section" id="s-sectores">
+      <div class="section-top">
+        <h2 class="section-title">Sectores y Carreras</h2>
+        <button class="btn btn-primary" onclick="openModal('modal-sector')">+ Nuevo sector</button>
+      </div>
+      <p style="font-size:13px;color:var(--gray-mid);margin-bottom:16px">Haz clic en un sector para ver y gestionar sus carreras.</p>
+      <div class="card">
+        <table>
+          <thead><tr><th>ID</th><th>Nombre del sector</th><th>Carreras</th><th>Acciones</th></tr></thead>
+          <tbody id="sectores-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tarjetas -->
+    <div class="section" id="s-tarjetas">
+      <div class="section-top"><h2 class="section-title">Tarjetas del test</h2><button class="btn btn-primary" onclick="openModal('modal-tarjeta')">+ Nueva tarjeta</button></div>
+      <div class="card"><table><thead><tr><th>ID</th><th>Texto</th><th>Carrera</th><th>Sector</th><th>Estado</th></tr></thead><tbody id="tarjetas-tbody"></tbody></table></div>
+    </div>
+
+    <!-- Universidades -->
+    <div class="section" id="s-universidades">
+      <div class="section-top"><h2 class="section-title">Universidades</h2><button class="btn btn-primary" onclick="openModal('modal-universidad')">+ Nueva universidad</button></div>
+      <div class="card"><table><thead><tr><th>Nombre</th><th>Localidad</th><th>Sitio web</th><th>Acciones</th></tr></thead><tbody id="univ-tbody"></tbody></table></div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="section" id="s-resultados">
+      <div class="section-top"><h2 class="section-title">Resultados vocacionales</h2></div>
+      <div class="card"><table><thead><tr><th>Alumno</th><th>Sector sugerido</th><th>Carreras afines</th><th>Fecha</th></tr></thead><tbody id="resultados-tbody"></tbody></table></div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="section" id="s-estadisticas">
+      <div class="section-top"><h2 class="section-title">Estadísticas globales</h2></div>
+      <div class="card" style="padding:24px"><div id="stats-bars"><div class="empty"><div class="ei">📊</div><p>Cargando...</p></div></div></div>
+    </div>
+
+    <!-- Perfil -->
+    <div class="section" id="s-perfil">
+      <div class="section-top"><h2 class="section-title">Mi perfil</h2></div>
+      <div class="perfil-grid">
+        <div class="perfil-avatar-card">
+          <div class="perfil-avatar" id="perfilAvatarBig"><span id="perfilAvatarLetter">A</span></div>
+          <div class="perfil-name" id="perfilName">—</div>
+          <div class="perfil-email" id="perfilEmail">—</div>
+          <span class="perfil-role" id="perfilRole">admin</span>
+          <p style="font-size:12px;color:var(--gray-mid);text-align:center;margin-top:8px">Pega una URL de imagen para actualizar tu foto</p>
+        </div>
+        <div class="perfil-form-card">
+          <div class="perfil-tabs">
+            <button class="perfil-tab active" onclick="switchTab('datos',this)">Datos personales</button>
+            <button class="perfil-tab" onclick="switchTab('password',this)">Contraseña</button>
+          </div>
+          <div class="perfil-tab-content active" id="tab-datos">
+            <div class="alert" id="alert-datos"></div>
+            <div class="perfil-field"><label>Nombre completo</label><input type="text" id="p-nombre" placeholder="Tu nombre"></div>
+            <div class="perfil-field"><label>Correo electrónico</label><input type="email" id="p-correo" placeholder="tu@correo.com"></div>
+            <div class="perfil-field">
+              <label>URL de foto de perfil</label>
+              <input type="text" id="p-foto" placeholder="https://ejemplo.com/foto.jpg">
+              <p class="foto-url-hint">Pega el enlace directo de una imagen (JPG, PNG)</p>
+            </div>
+            <button class="btn btn-primary" style="width:100%;padding:12px" onclick="guardarDatos()">Guardar cambios</button>
+          </div>
+          <div class="perfil-tab-content" id="tab-password">
+            <div class="alert" id="alert-password"></div>
+            <div class="perfil-field"><label>Contraseña actual</label><input type="password" id="p-pass-actual" placeholder="••••••••"></div>
+            <div class="perfil-field"><label>Nueva contraseña</label><input type="password" id="p-pass-nueva" placeholder="Mínimo 6 caracteres"></div>
+            <div class="perfil-field"><label>Confirmar nueva contraseña</label><input type="password" id="p-pass-confirm" placeholder="Repite la nueva contraseña"></div>
+            <button class="btn btn-primary" style="width:100%;padding:12px" onclick="cambiarPassword()">Cambiar contraseña</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Modal: sector -->
+<div class="modal-overlay" id="modal-sector">
+  <div class="modal">
+    <h3>Nuevo sector</h3>
+    <div class="alert-inline" id="alert-sector-dup"></div>
+    <div class="form-field"><label>Nombre del sector</label><input type="text" id="in-sector-nombre" placeholder="Ej. Ingeniería y Tecnología"></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal('modal-sector')">Cancelar</button><button class="btn btn-primary" onclick="crearSector()">Crear sector</button></div>
+  </div>
+</div>
+
+<!-- Modal: editar sector -->
+<div class="modal-overlay" id="modal-edit-sector">
+  <div class="modal">
+    <h3>Editar sector</h3>
+    <input type="hidden" id="edit-sector-id">
+    <div class="form-field"><label>Nombre del sector</label><input type="text" id="edit-sector-nombre"></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal('modal-edit-sector')">Cancelar</button><button class="btn btn-primary" onclick="guardarSector()">Guardar cambios</button></div>
+  </div>
+</div>
+
+<!-- Modal: nueva carrera dentro de sector -->
+<div class="modal-overlay" id="modal-carrera-sector">
+  <div class="modal">
+    <h3 id="modal-carrera-titulo">Nueva carrera</h3>
+    <input type="hidden" id="cs-sector-id">
+    <div class="form-field"><label>Nombre de la carrera</label><input type="text" id="cs-nombre" placeholder="Ej. Ingeniería de Software"></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal('modal-carrera-sector')">Cancelar</button><button class="btn btn-primary" onclick="crearCarreraSector()">Crear carrera</button></div>
+  </div>
+</div>
+
+<!-- Modal: editar carrera -->
+<div class="modal-overlay" id="modal-edit-carrera">
+  <div class="modal">
+    <h3>Editar carrera</h3>
+    <input type="hidden" id="edit-carrera-id">
+    <input type="hidden" id="edit-carrera-sector-id">
+    <div class="form-field"><label>Nombre de la carrera</label><input type="text" id="edit-carrera-nombre"></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal('modal-edit-carrera')">Cancelar</button><button class="btn btn-primary" onclick="guardarCarrera()">Guardar cambios</button></div>
+  </div>
+</div>
+
+<!-- Modal: tarjeta -->
+<div class="modal-overlay" id="modal-tarjeta">
+  <div class="modal">
+    <h3>Nueva tarjeta</h3>
+    <div class="form-field"><label>Texto de la pregunta</label><textarea id="in-tarjeta-texto" placeholder="¿Te imaginas...?"></textarea></div>
+    <div class="form-field"><label>Carrera</label><select id="in-tarjeta-carrera"></select></div>
+    <div class="form-field"><label>URL de imagen (opcional)</label><input type="text" id="in-tarjeta-imagen" placeholder="https://..."></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal('modal-tarjeta')">Cancelar</button><button class="btn btn-primary" onclick="crearTarjeta()">Crear tarjeta</button></div>
+  </div>
+</div>
+
+<!-- Modal: universidad -->
+<div class="modal-overlay" id="modal-universidad">
+  <div class="modal">
+    <h3>Nueva universidad</h3>
+    <div class="form-field"><label>Nombre</label><input type="text" id="in-univ-nombre" placeholder="Universidad Nacional..."></div>
+    <div class="form-field"><label>Localidad</label><input type="text" id="in-univ-localidad" placeholder="Ciudad de México"></div>
+    <div class="form-field"><label>Sitio web</label><input type="text" id="in-univ-web" placeholder="https://..."></div>
+    <div class="form-field"><label>Oferta educativa</label><textarea id="in-univ-oferta" placeholder="Descripción..."></textarea></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal('modal-universidad')">Cancelar</button><button class="btn btn-primary" onclick="crearUniversidad()">Crear universidad</button></div>
+  </div>
+</div>
+
+<script>
+const API   = 'https://matchvoc-backend-production.up.railway.app';
+const token = localStorage.getItem('mv_token');
+if (!token) window.location.href = 'index.html';
+const h = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+let allAlumnos=[], allSectores=[], allCarreras=[];
+let openSectorId = null;
+
+// Init UI
+const nombre = localStorage.getItem('mv_nombre') || 'Admin';
+document.getElementById('sidebarName').textContent = nombre;
+document.getElementById('sidebarLetter').textContent = nombre.charAt(0).toUpperCase();
+document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// Navegación
+function show(name, btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(`s-${name}`).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const titles={dashboard:'Dashboard',alumnos:'Alumnos',sectores:'Sectores y Carreras',tarjetas:'Tarjetas del test',universidades:'Universidades',resultados:'Resultados',estadisticas:'Estadísticas',perfil:'Mi perfil'};
+  document.getElementById('pageTitle').textContent = titles[name]||name;
+  if (name==='perfil') loadPerfil();
+}
+
+// Modales
+function openModal(id) {
+  if (id==='modal-tarjeta') poblarSelectCarreras();
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// Tabs perfil
+function switchTab(tab, btn) {
+  document.querySelectorAll('.perfil-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.perfil-tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById(`alert-${tab}`).className='alert';
+}
+
+// ── SECTORES con carreras expandibles ──
+async function loadSectores() {
+  try {
+    const r = await fetch(`${API}/api/sectores`);
+    allSectores = await r.json();
+    document.getElementById('cnt-sectores').textContent = allSectores.length;
+    renderSectores();
+  } catch(e) {}
+}
+
+function renderSectores() {
+  const tbody = document.getElementById('sectores-tbody');
+  if (!allSectores.length) { tbody.innerHTML = emptyRow(4,'📁','Sin sectores'); return; }
+
+  tbody.innerHTML = allSectores.map(s => {
+    const carrerasSector = allCarreras.filter(c => c.idSector === s.id);
+    const isOpen = openSectorId === s.id;
+    return `
+      <tr class="sector-row" onclick="toggleSector(${s.id})">
+        <td>${s.id}</td>
+        <td><strong>${s.nombre}</strong></td>
+        <td><span class="chip blue">● ${carrerasSector.length} carreras</span></td>
+        <td style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-edit" onclick="event.stopPropagation();abrirEditSector(${s.id},'${s.nombre.replace(/'/g,"\\'")}')">Editar</button>
+          <button class="btn btn-danger" onclick="event.stopPropagation();eliminarSector(${s.id})">Eliminar</button>
+          <span class="sector-chevron" style="transform:${isOpen?'rotate(90deg)':'rotate(0deg)'}">›</span>
+        </td>
+      </tr>
+      <tr id="panel-${s.id}">
+        <td colspan="4" style="padding:0;background:var(--pearl);">
+          <div class="carreras-inner" style="display:${isOpen?'block':'none'}">
+            <div class="panel-header">
+              <span class="panel-title">🎓 Carreras de <strong>${s.nombre}</strong></span>
+              <button class="btn btn-primary" onclick="abrirNuevaCarrera(${s.id},'${s.nombre.replace(/'/g,"\\'")}')">+ Nueva carrera</button>
+            </div>
+            <table class="carreras-table">
+              <thead><tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr></thead>
+              <tbody id="carreras-sector-${s.id}">
+                ${carrerasSector.length
+                  ? carrerasSector.map(c=>`
+                    <tr>
+                      <td>${c.id}</td>
+                      <td>${c.nombre}</td>
+                      <td style="display:flex;gap:8px">
+                        <button class="btn btn-edit" onclick="abrirEditCarrera(${c.id},${s.id},'${c.nombre.replace(/'/g,"\\'")}')">Editar</button>
+                        <button class="btn btn-danger" onclick="eliminarCarrera(${c.id})">Eliminar</button>
+                      </td>
+                    </tr>`).join('')
+                  : `<tr><td colspan="3" style="text-align:center;color:var(--gray-mid);padding:20px">Sin carreras en este sector</td></tr>`
+                }
+              </tbody>
+            </table>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function toggleSector(id) {
+  openSectorId = openSectorId === id ? null : id;
+  renderSectores();
+}
+
+// Crear sector con validación de duplicado
+async function crearSector() {
+  const nombre = document.getElementById('in-sector-nombre').value.trim();
+  const alertEl = document.getElementById('alert-sector-dup');
+  alertEl.className = 'alert-inline';
+  if (!nombre) { alertEl.textContent='Escribe el nombre del sector'; alertEl.className='alert-inline error'; return; }
+
+  const duplicado = allSectores.some(s => s.nombre.toLowerCase() === nombre.toLowerCase());
+  if (duplicado) { alertEl.textContent=`El sector "${nombre}" ya existe`; alertEl.className='alert-inline error'; return; }
+
+  const r = await fetch(`${API}/api/sectores`, { method:'POST', headers:h, body:JSON.stringify({nombre}) });
+  if (r.ok) {
+    closeModal('modal-sector');
+    document.getElementById('in-sector-nombre').value='';
+    await loadSectores();
+    await loadCarreras();
+  } else { alertEl.textContent='Error al crear sector'; alertEl.className='alert-inline error'; }
+}
+
+function abrirEditSector(id, nombre) {
+  document.getElementById('edit-sector-id').value = id;
+  document.getElementById('edit-sector-nombre').value = nombre;
+  openModal('modal-edit-sector');
+}
+
+async function guardarSector() {
+  const id     = document.getElementById('edit-sector-id').value;
+  const nombre = document.getElementById('edit-sector-nombre').value.trim();
+  if (!nombre) return;
+  const r = await fetch(`${API}/api/sectores/${id}`, { method:'PUT', headers:h, body:JSON.stringify({nombre}) });
+  if (r.ok) { closeModal('modal-edit-sector'); await loadSectores(); await loadCarreras(); }
+  else alert('Error al actualizar sector');
+}
+
+// Carreras dentro de sector
+function abrirNuevaCarrera(idSector, nombreSector) {
+  document.getElementById('cs-sector-id').value = idSector;
+  document.getElementById('modal-carrera-titulo').textContent = `Nueva carrera en ${nombreSector}`;
+  document.getElementById('cs-nombre').value = '';
+  openModal('modal-carrera-sector');
+}
+
+async function crearCarreraSector() {
+  const nombre   = document.getElementById('cs-nombre').value.trim();
+  const idSector = parseInt(document.getElementById('cs-sector-id').value);
+  if (!nombre) return alert('Escribe el nombre de la carrera');
+  const r = await fetch(`${API}/api/carreras`, { method:'POST', headers:h, body:JSON.stringify({nombre,idSector}) });
+  if (r.ok) { closeModal('modal-carrera-sector'); await loadCarreras(); renderSectores(); }
+  else alert('Error al crear carrera');
+}
+
+function abrirEditCarrera(id, idSector, nombre) {
+  document.getElementById('edit-carrera-id').value = id;
+  document.getElementById('edit-carrera-sector-id').value = idSector;
+  document.getElementById('edit-carrera-nombre').value = nombre;
+  openModal('modal-edit-carrera');
+}
+
+async function guardarCarrera() {
+  const id       = document.getElementById('edit-carrera-id').value;
+  const idSector = parseInt(document.getElementById('edit-carrera-sector-id').value);
+  const nombre   = document.getElementById('edit-carrera-nombre').value.trim();
+  if (!nombre) return;
+  const r = await fetch(`${API}/api/carreras/${id}`, { method:'PUT', headers:h, body:JSON.stringify({nombre,idSector}) });
+  if (r.ok) { closeModal('modal-edit-carrera'); await loadCarreras(); renderSectores(); }
+  else alert('Error al actualizar carrera');
+}
+
+// ── Resto de cargas ──
+async function loadAlumnos() {
+  try {
+    const r = await fetch(`${API}/api/usuarios`, { headers:h });
+    if (!r.ok) return;
+    allAlumnos = await r.json();
+    document.getElementById('cnt-alumnos').textContent = allAlumnos.length;
+    renderAlumnos(allAlumnos);
+    document.getElementById('recent-tbody').innerHTML = allAlumnos.slice(0,5).map(u=>`
+      <tr><td>${u.nombre}</td><td>${u.correo}</td><td><span class="badge ${u.role}">${u.role}</span></td></tr>`).join('') || emptyRow(3,'👨‍🎓','Sin alumnos aún');
+  } catch(e) {}
+}
+
+async function loadCarreras() {
+  try {
+    const r = await fetch(`${API}/api/carreras`);
+    allCarreras = await r.json();
+  } catch(e) {}
+}
+
+async function loadTarjetas() {
+  try {
+    const r = await fetch(`${API}/api/tarjetas`);
+    const data = await r.json();
+    document.getElementById('cnt-tarjetas').textContent = data.length;
+    document.getElementById('tarjetas-tbody').innerHTML = data.map(t=>`
+      <tr><td>${t.id}</td><td style="max-width:280px">${t.texto}</td><td>${t.nombreCarrera}</td><td>${t.nombreSector}</td><td><span class="badge ${t.activa?'active':'inactive'}">${t.activa?'Activa':'Inactiva'}</span></td></tr>`).join('') || emptyRow(5,'🃏','Sin tarjetas');
+  } catch(e) {}
+}
+
+async function loadUniversidades() {
+  try {
+    const r = await fetch(`${API}/api/universidades`);
+    const data = await r.json();
+    document.getElementById('univ-tbody').innerHTML = data.map(u=>`
+      <tr><td>${u.nombre}</td><td>${u.localidad||'—'}</td><td>${u.sitioWeb?`<a href="${u.sitioWeb}" target="_blank" style="color:var(--accent)">${u.sitioWeb}</a>`:'—'}</td><td><button class="btn btn-danger" onclick="eliminarUniversidad(${u.id})">Eliminar</button></td></tr>`).join('') || emptyRow(4,'🏛️','Sin universidades');
+  } catch(e) {}
+}
+
+async function loadResultados() {
+  try {
+    const r = await fetch(`${API}/api/resultados`, { headers:h });
+    if (!r.ok) return;
+    const data = await r.json();
+    document.getElementById('cnt-resultados').textContent = data.length;
+    document.getElementById('resultados-tbody').innerHTML = data.map(r=>`
+      <tr><td>${r.nombreUsuario}</td><td><span class="badge student">${r.sectorSugerido}</span></td><td>${r.carrerasAfines.join(', ')}</td><td>${new Date(r.fecha).toLocaleDateString('es-MX')}</td></tr>`).join('') || emptyRow(4,'📈','Sin resultados aún');
+    const stats={};
+    data.forEach(r=>{stats[r.sectorSugerido]=(stats[r.sectorSugerido]||0)+1;});
+    const max=Math.max(...Object.values(stats),1);
+    document.getElementById('stats-bars').innerHTML = Object.entries(stats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+      <div class="bar-row"><div class="bar-info"><span>${k}</span><span style="color:var(--gray-mid)">${v} alumnos</span></div><div class="bar-track"><div class="bar-fill" style="width:${(v/max)*100}%"></div></div></div>`).join('') || '<div class="empty"><div class="ei">📊</div><p>Sin datos aún</p></div>';
+  } catch(e) {}
+}
+
+function renderAlumnos(data) {
+  document.getElementById('alumnos-tbody').innerHTML = data.map(u=>`
+    <tr><td>${u.id}</td><td>${u.nombre}</td><td>${u.correo}</td><td><span class="badge ${u.role}">${u.role}</span></td><td>${u.createdAt?new Date(u.createdAt).toLocaleDateString('es-MX'):'—'}</td></tr>`).join('') || emptyRow(5,'👨‍🎓','Sin alumnos registrados');
+}
+function filterAlumnos(q) { renderAlumnos(allAlumnos.filter(u=>u.nombre.toLowerCase().includes(q.toLowerCase())||u.correo.toLowerCase().includes(q.toLowerCase()))); }
+function poblarSelectCarreras() { document.getElementById('in-tarjeta-carrera').innerHTML = allCarreras.map(c=>`<option value="${c.id}">${c.nombre} — ${c.nombreSector}</option>`).join(''); }
+
+async function crearTarjeta() {
+  const texto=document.getElementById('in-tarjeta-texto').value.trim();
+  const idCarrera=parseInt(document.getElementById('in-tarjeta-carrera').value);
+  const imagenUrl=document.getElementById('in-tarjeta-imagen').value.trim()||null;
+  if (!texto) return alert('Escribe el texto');
+  const r=await fetch(`${API}/api/tarjetas`,{method:'POST',headers:h,body:JSON.stringify({texto,idCarrera,imagenUrl})});
+  if(r.ok){closeModal('modal-tarjeta');document.getElementById('in-tarjeta-texto').value='';await loadTarjetas();}
+  else alert('Error al crear tarjeta');
+}
+
+async function crearUniversidad() {
+  const nombre=document.getElementById('in-univ-nombre').value.trim();
+  const localidad=document.getElementById('in-univ-localidad').value.trim()||null;
+  const sitioWeb=document.getElementById('in-univ-web').value.trim()||null;
+  const ofertaEducativa=document.getElementById('in-univ-oferta').value.trim()||null;
+  if(!nombre) return alert('Escribe el nombre');
+  const r=await fetch(`${API}/api/universidades`,{method:'POST',headers:h,body:JSON.stringify({nombre,localidad,sitioWeb,ofertaEducativa})});
+  if(r.ok){closeModal('modal-universidad');await loadUniversidades();}
+  else alert('Error al crear universidad');
+}
+
+async function eliminarSector(id) {
+  if (!confirm('¿Eliminar este sector? También se eliminarán sus carreras y tarjetas.')) return;
+  const r=await fetch(`${API}/api/sectores/${id}`,{method:'DELETE',headers:h});
+  if(r.ok){if(openSectorId===id)openSectorId=null;await loadSectores();await loadCarreras();renderSectores();}
+  else alert('Error al eliminar');
+}
+
+async function eliminarCarrera(id) {
+  if (!confirm('¿Eliminar esta carrera?')) return;
+  const r=await fetch(`${API}/api/carreras/${id}`,{method:'DELETE',headers:h});
+  if(r.ok){await loadCarreras();renderSectores();}
+  else alert('Error al eliminar');
+}
+
+async function eliminarUniversidad(id) {
+  if (!confirm('¿Eliminar esta universidad?')) return;
+  const r=await fetch(`${API}/api/universidades/${id}`,{method:'DELETE',headers:h});
+  if(r.ok) await loadUniversidades();
+  else alert('Error al eliminar');
+}
+
+// Perfil
+async function loadPerfil() {
+  try {
+    const r=await fetch(`${API}/api/usuarios/me`,{headers:h});
+    if(!r.ok) return;
+    const d=await r.json();
+    document.getElementById('perfilName').textContent=d.nombre;
+    document.getElementById('perfilEmail').textContent=d.correo;
+    document.getElementById('perfilRole').textContent=d.role;
+    document.getElementById('p-nombre').value=d.nombre;
+    document.getElementById('p-correo').value=d.correo;
+    document.getElementById('p-foto').value=d.fotoUrl||'';
+    updateAvatarDisplay(d.nombre,d.fotoUrl);
+  } catch(e) {}
+}
+
+function updateAvatarDisplay(nombre,fotoUrl) {
+  const l=nombre.charAt(0).toUpperCase();
+  const imgTag=fotoUrl?`<img src="${fotoUrl}" alt="foto" onerror="this.parentElement.innerHTML='<span>${l}</span>'">`:`<span>${l}</span>`;
+  document.getElementById('perfilAvatarBig').innerHTML=imgTag;
+  document.getElementById('sidebarAvatar').innerHTML=fotoUrl?`<img src="${fotoUrl}" alt="foto" onerror="this.parentElement.innerHTML='<span>${l}</span>'">`:`<span>${l}</span>`;
+  document.getElementById('sidebarName').textContent=nombre;
+}
+
+function showAlert(id,type,msg) {
+  const el=document.getElementById(id);
+  el.className=`alert ${type}`;
+  el.textContent=msg;
+  setTimeout(()=>{el.className='alert';},4000);
+}
+
+async function guardarDatos() {
+  const nombre=document.getElementById('p-nombre').value.trim();
+  const correo=document.getElementById('p-correo').value.trim();
+  const fotoUrl=document.getElementById('p-foto').value.trim()||null;
+  if(!nombre||!correo) return showAlert('alert-datos','error','Nombre y correo son obligatorios');
+  try {
+    const r=await fetch(`${API}/api/usuarios/me`,{method:'PUT',headers:h,body:JSON.stringify({nombre,correo,fotoUrl})});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.error);
+    localStorage.setItem('mv_nombre',data.nombre);
+    updateAvatarDisplay(data.nombre,data.fotoUrl);
+    document.getElementById('perfilName').textContent=data.nombre;
+    document.getElementById('perfilEmail').textContent=data.correo;
+    showAlert('alert-datos','success','✓ Perfil actualizado correctamente');
+  } catch(e) { showAlert('alert-datos','error',e.message||'Error al guardar'); }
+}
+
+async function cambiarPassword() {
+  const actual=document.getElementById('p-pass-actual').value;
+  const nueva=document.getElementById('p-pass-nueva').value;
+  const confirm=document.getElementById('p-pass-confirm').value;
+  if(!actual||!nueva||!confirm) return showAlert('alert-password','error','Completa todos los campos');
+  if(nueva!==confirm) return showAlert('alert-password','error','Las contraseñas nuevas no coinciden');
+  if(nueva.length<6) return showAlert('alert-password','error','Mínimo 6 caracteres');
+  try {
+    const r=await fetch(`${API}/api/usuarios/me/password`,{method:'PUT',headers:h,body:JSON.stringify({passwordActual:actual,passwordNuevo:nueva})});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.error);
+    document.getElementById('p-pass-actual').value='';
+    document.getElementById('p-pass-nueva').value='';
+    document.getElementById('p-pass-confirm').value='';
+    showAlert('alert-password','success','✓ Contraseña actualizada correctamente');
+  } catch(e) { showAlert('alert-password','error',e.message||'Error al cambiar contraseña'); }
+}
+
+function emptyRow(cols,icon,msg){return `<tr><td colspan="${cols}"><div class="empty"><div class="ei">${icon}</div><p>${msg}</p></div></td></tr>`;}
+function logout(){localStorage.clear();window.location.href='index.html';}
+
+async function init() {
+  await loadAlumnos();
+  await loadSectores();
+  await loadCarreras();
+  renderSectores();
+  await Promise.all([loadTarjetas(),loadUniversidades(),loadResultados()]);
+}
+init();
+</script>
+</body>
+</html>
